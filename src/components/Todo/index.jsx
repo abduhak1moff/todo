@@ -26,21 +26,31 @@ export class Todo extends Component {
         done: true,
       },
     ],
+    selected: null,
   };
   render() {
     const { todos } = this.state;
 
     const doneItem = todos.filter((todo) => todo.done);
     const undoneItem = todos.filter((todo) => !todo.done);
-
     const getValue = (value) => {
-      let todos = [
-        ...this.state.todos,
-        { id: v4(), title: value, done: false },
-      ];
+      let todos;
+      if (this.state.selected === null) {
+        todos = [...this.state.todos, { id: v4(), title: value, done: false }];
+        toast.success("Add todo");
+      } else {
+        todos = this.state.todos.map((td) => {
+          if (td.id === this.state.selected) {
+            td.title = value;
+          }
+          return td;
+        });
+        this.setState({ selected: null });
+        toast.success("Edit todo");
+      }
+
       if (value !== "") {
         this.setState({ todos });
-        toast.success("Add todo");
         localStorage.setItem(TODOS, JSON.stringify(todos));
       } else {
         toast.error("Please fill !!!");
@@ -65,16 +75,26 @@ export class Todo extends Component {
       toast.error("Delete todo !!!");
       localStorage.setItem(TODOS, JSON.stringify(todos));
     };
+    const editTodo = (id) => {
+      this.setState({ selected: id });
+    };
+    let todo = this.state.todos.find((td) => td.id === this.state.selected);
+
     return (
       <div className="container">
         <h1 className="fw-bold fs-12 text-center">Todo App</h1>
-        <TodoForm getValue={getValue} />
+        <TodoForm todo={todo ? todo.title : ""} getValue={getValue} />
 
         <Row>
           <Col xs={6}>
             {" "}
             {undoneItem.map((todo, i) => (
-              <UnDoneTodo key={i} {...todo} doneTodo={doneTodo} />
+              <UnDoneTodo
+                editTodo={editTodo}
+                key={i}
+                {...todo}
+                doneTodo={doneTodo}
+              />
             ))}
           </Col>
           <Col xs={6}>
